@@ -61,16 +61,24 @@ namespace Tahvohck_Mods
         protected virtual void OnPreResetEventHandler(EventArgs e)
         {
             EventHandler handler = PreResetEvent;
-            if (!(handler is null)) {
-                handler.Invoke(this, e);
+            try {
+                if (!(handler is null)) {
+                    handler.Invoke(this, e);
+                }
+            } catch (Exception ex) {
+                TahvUtil.Log($"Failed to load: {ex.Message}");
             }
         }
 
         protected virtual void OnPostResetEventHandler(EventArgs e)
         {
             EventHandler handler = PostResetEvent;
-            if (!(handler is null)) {
-                handler.Invoke(this, e);
+            try {
+                if (!(handler is null)) {
+                    handler.Invoke(this, e);
+                }
+            } catch (Exception ex) {
+                TahvUtil.Log($"Failed to load: {ex.Message}");
             }
         }
     }
