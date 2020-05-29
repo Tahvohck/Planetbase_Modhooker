@@ -24,11 +24,18 @@ namespace Tahvohck_Mods
             OnPreResetEventHandler(EventArgs.Empty);
 
             // By setting these to null, the game will natively restore them during getInstance()
-            PlanetList.mInstance = null;
-            ModuleTypeList.mInstance = null;
             NameGenerator.mInstance = null; // No issues found. Names generate fine.
             CharacterDefinitions.mInstance = null;  // No issues found. Characters seem fine.
             ExtraQualitySettings.mInstance = null;  // Possible use: More quality settings?
+
+            // These all derive from TypeList
+            AchievementList.mInstance = null;
+            ComponentTypeList.mInstance = null;
+            ConditionTypeList.mInstance = null;
+            MilestoneList.mInstance = null;
+            PlanetList.mInstance = null;
+            ModuleTypeList.mInstance = null;
+
 
 
             // Dangerous mInstances that fuck the game up.
