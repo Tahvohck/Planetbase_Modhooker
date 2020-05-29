@@ -68,25 +68,40 @@ namespace Tahvohck_Mods
         protected virtual void OnPreResetEventHandler(EventArgs e)
         {
             EventHandler handler = PreResetEvent;
-            try {
-                if (!(handler is null)) {
-                    handler.Invoke(this, e);
-                }
-            } catch (Exception ex) {
-                TahvUtil.Log($"Failed to load: {ex.Message}");
-            }
+            foreach (Delegate del in handler?.GetInvocationList()) { Invoke(del, e); }
         }
 
         protected virtual void OnPostResetEventHandler(EventArgs e)
         {
             EventHandler handler = PostResetEvent;
+            foreach (Delegate del in handler?.GetInvocationList()) { Invoke(del, e); }
+        }
+
+        /// <summary>
+        /// Handle invoking a delagte from generic EventHandlers.
+        /// </summary>
+        /// <param name="del">Delegate to invoke.</param>
+        /// <param name="evArgs">EventArgs to pass.</param>
+        /// <returns></returns>
+        internal bool Invoke(Delegate del, EventArgs evArgs)
+        {
             try {
-                if (!(handler is null)) {
-                    handler.Invoke(this, e);
-                }
-            } catch (Exception ex) {
-                TahvUtil.Log($"Failed to load: {ex.Message}");
+                del.DynamicInvoke(new object[] { this, evArgs });
+                return true;
+            } catch (TargetInvocationException ex) {
+                MethodInfo m = del.Method;
+                TahvUtil.Log($"{ex.Message} [{m.DeclaringType.FullName}.{m.Name}()]" +
+                    $"\n  Inner exception: {ex.InnerException.Message}");
+                return false;
+            } catch (MemberAccessException ex) {
+                MethodInfo m = del.Method;
+                TahvUtil.Log($"Issue while invoking [{m.DeclaringType.FullName}.{m.Name}()]: {ex.Message}");
+                return false;
+            } catch (ArgumentException ex) {
+                TahvUtil.Log(ex.Message);
+                return false;
             }
+
         }
     }
 }
