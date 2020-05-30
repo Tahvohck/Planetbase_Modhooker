@@ -21,14 +21,22 @@ namespace Tahvohck_Mods
             TahvUtil.Log($"Initialized Modhooker v{ver}");
 
             // Call all code that needs to have the mInstance lists reset after it runs.
-            OnPreResetEventHandler(EventArgs.Empty);
+            //OnPreResetEventHandler(EventArgs.Empty);
+            RunEvent(PreResetEvent);
 
             // By setting these to null, the game will natively restore them during getInstance()
-            PlanetList.mInstance = null;
-            ModuleTypeList.mInstance = null;
             NameGenerator.mInstance = null; // No issues found. Names generate fine.
             CharacterDefinitions.mInstance = null;  // No issues found. Characters seem fine.
             ExtraQualitySettings.mInstance = null;  // Possible use: More quality settings?
+
+            // These all derive from TypeList
+            AchievementList.mInstance = null;
+            ComponentTypeList.mInstance = null;
+            ConditionTypeList.mInstance = null;
+            MilestoneList.mInstance = null;
+            PlanetList.mInstance = null;
+            ModuleTypeList.mInstance = null;
+
 
 
             // Dangerous mInstances that fuck the game up.
@@ -46,7 +54,11 @@ namespace Tahvohck_Mods
             //GameManager.mInstance = null;     // A lot of shit in here. See what it does. Looks powerful.
 
             TahvUtil.Log("Done resetting lists.");
-            OnPostResetEventHandler(EventArgs.Empty);
+            //OnPostResetEventHandler(EventArgs.Empty);
+            RunEvent(PostResetEvent);
+
+            // Finally, call all mods that don't care about list reset.
+            RunEvent(UtilsReadyEvent);
         }
 
         public void Update()
@@ -57,21 +69,50 @@ namespace Tahvohck_Mods
 
         public static event EventHandler PreResetEvent;
         public static event EventHandler PostResetEvent;
+        public static event EventHandler UtilsReadyEvent;
+
+        protected virtual void RunEvent(EventHandler handler)
+        {
+            foreach (Delegate del in handler?.GetInvocationList()) { Invoke(del, EventArgs.Empty); }
+        }
 
         protected virtual void OnPreResetEventHandler(EventArgs e)
         {
             EventHandler handler = PreResetEvent;
-            if (!(handler is null)) {
-                handler.Invoke(this, e);
-            }
+            foreach (Delegate del in handler?.GetInvocationList()) { Invoke(del, e); }
         }
 
         protected virtual void OnPostResetEventHandler(EventArgs e)
         {
             EventHandler handler = PostResetEvent;
-            if (!(handler is null)) {
-                handler.Invoke(this, e);
+            foreach (Delegate del in handler?.GetInvocationList()) { Invoke(del, e); }
+        }
+
+        /// <summary>
+        /// Handle invoking a delagte from generic EventHandlers.
+        /// </summary>
+        /// <param name="del">Delegate to invoke.</param>
+        /// <param name="evArgs">EventArgs to pass.</param>
+        /// <returns></returns>
+        internal bool Invoke(Delegate del, EventArgs evArgs)
+        {
+            try {
+                del.DynamicInvoke(new object[] { this, evArgs });
+                return true;
+            } catch (TargetInvocationException ex) {
+                MethodInfo m = del.Method;
+                TahvUtil.Log($"{ex.Message} [{m.DeclaringType.FullName}.{m.Name}()]" +
+                    $"\n  Inner exception: {ex.InnerException.Message}");
+                return false;
+            } catch (MemberAccessException ex) {
+                MethodInfo m = del.Method;
+                TahvUtil.Log($"Issue while invoking [{m.DeclaringType.FullName}.{m.Name}()]: {ex.Message}");
+                return false;
+            } catch (ArgumentException ex) {
+                TahvUtil.Log(ex.Message);
+                return false;
             }
+
         }
     }
 }
