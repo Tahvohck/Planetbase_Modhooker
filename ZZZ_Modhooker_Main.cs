@@ -21,7 +21,8 @@ namespace Tahvohck_Mods
             TahvUtil.Log($"Initialized Modhooker v{ver}");
 
             // Call all code that needs to have the mInstance lists reset after it runs.
-            OnPreResetEventHandler(EventArgs.Empty);
+            //OnPreResetEventHandler(EventArgs.Empty);
+            RunEvent(PreResetEvent);
 
             // By setting these to null, the game will natively restore them during getInstance()
             NameGenerator.mInstance = null; // No issues found. Names generate fine.
@@ -53,7 +54,11 @@ namespace Tahvohck_Mods
             //GameManager.mInstance = null;     // A lot of shit in here. See what it does. Looks powerful.
 
             TahvUtil.Log("Done resetting lists.");
-            OnPostResetEventHandler(EventArgs.Empty);
+            //OnPostResetEventHandler(EventArgs.Empty);
+            RunEvent(PostResetEvent);
+
+            // Finally, call all mods that don't care about list reset.
+            RunEvent(UtilsReadyEvent);
         }
 
         public void Update()
@@ -64,6 +69,12 @@ namespace Tahvohck_Mods
 
         public static event EventHandler PreResetEvent;
         public static event EventHandler PostResetEvent;
+        public static event EventHandler UtilsReadyEvent;
+
+        protected virtual void RunEvent(EventHandler handler)
+        {
+            foreach (Delegate del in handler?.GetInvocationList()) { Invoke(del, EventArgs.Empty); }
+        }
 
         protected virtual void OnPreResetEventHandler(EventArgs e)
         {
