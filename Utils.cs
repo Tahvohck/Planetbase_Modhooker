@@ -49,6 +49,12 @@ namespace Tahvohck_Mods
     }
 
 
+    public interface ITahvUtilMod
+    {
+        void Setup(object caller, EventArgs evArgs);
+    }
+
+
     /// <summary>
     /// Component flags based on the huge amount of ints in <see cref="Planetbase.ComponentType"/>
     /// </summary>
